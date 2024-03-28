@@ -1,0 +1,13 @@
+#![enable(implicit_some)]
+
+(
+    name: "ExampleClass2",
+    schema: Class({
+        "str": Str,
+        "num": Num,
+        "bool": Bool,
+
+        "defEnumExampleEnum": DefEnum("exampleEnum"),
+        "defClassExampleClass3": DefClass("exampleClass3"),
+    })
+)

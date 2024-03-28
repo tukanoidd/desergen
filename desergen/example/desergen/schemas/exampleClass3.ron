@@ -1,0 +1,8 @@
+#![enable(implicit_some)]
+
+(
+    name: "ExampleClass3",
+    schema: Class({
+        "defClassExampleClass2": DefClass("exampleClass2"),
+    }),
+)

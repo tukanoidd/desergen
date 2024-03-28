@@ -1,0 +1,33 @@
+#![enable(implicit_some)]
+
+(
+    name: "ExampleClass",
+    schema: Class({
+        "str": Str,
+        "num": Num,
+        "bool": Bool,
+
+        "arrStr": Arr(Str),
+        "arrMapStrStr": Arr(Map(Str, Str)),
+        "arrOptPrimStr": Arr(Opt(Str)),
+        "arrDefEnumExampleEnum": DefEnum("exampleEnum"),
+        "arrDefClassExampleClass2": DefClass("exampleClass2"),
+
+        "mapStrStr": Map(Str, Str),
+        "mapStrArrStr": Map(Str, Arr(Str)),
+        "mapStrMapStrStr": Map(Str, Map(Str, Str)),
+        "mapStrOptStr": Map(Str, Opt(Str)),
+        "mapStrDefEnumExampleEnum": Map(Str, DefEnum("exampleEnum")),
+        "mapStrDefClassExampleClass2": Map(Str, DefClass("exampleClass2")),
+
+        "optStr": Opt(Str),
+        "optArrStr": Opt(Arr(Str)),
+        "optMapStrStr": Opt(Map(Str, Str)),
+        "optDefEnumExampleEnum": DefEnum("exampleEnum"),
+        "optDefClassExampleClass2": DefClass("exampleClass2"),
+
+        "defEnumExampleEnum": DefEnum("exampleEnum"),
+
+        "defClassExampleClass2": DefClass("exampleClass2")
+    })
+)

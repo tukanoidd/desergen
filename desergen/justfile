@@ -1,0 +1,2 @@
+run_example:
+    cargo run -- -c example/desergen.toml
