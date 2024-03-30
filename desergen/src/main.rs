@@ -1,4 +1,5 @@
 mod config;
+mod generator;
 mod schema;
 
 use std::path::PathBuf;
@@ -8,6 +9,8 @@ use config::Config;
 use miette::IntoDiagnostic;
 use schema::registry::Registry;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+use crate::generator::generate;
 
 /// Generate type-safe deserializable TS classes from JSON/JS Object - defining schemas
 #[derive(Parser)]
@@ -50,13 +53,16 @@ fn main() -> miette::Result<()> {
     }
 
     let registry = {
+        tracing::info!("Initializing registry");
         let mut registry = Registry::default();
         registry.process_schema_files(schemas_root_dir, schemas)?;
+
+        tracing::info!("Registry Initialized");
 
         registry
     };
 
-    tracing::debug!("Registry: {registry:#?}");
+    generate(&registry)?;
 
     Ok(())
 }

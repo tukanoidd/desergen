@@ -28,6 +28,10 @@ pub struct Registry {
 }
 
 impl Registry {
+    pub fn schemas(&self) -> impl Iterator<Item = &SchemaInfo> {
+        self.mapping.values()
+    }
+
     pub fn get(&self, id: &Uuid) -> RegistryResult<&SchemaInfo> {
         self.mapping.get(id).ok_or(RegistryError::IdNotFound(*id))
     }
@@ -39,6 +43,8 @@ impl Registry {
     ) -> RegistryInitResult<()> {
         let schemas_root = schemas_root_dir.as_ref();
 
+        tracing::info!("Reading schema files...");
+
         let raw_schemas = schemas
             .into_iter()
             .map(|mod_path| {
@@ -46,11 +52,15 @@ impl Registry {
             })
             .collect::<RawSchemaInfoResult<Vec<_>>>()?;
 
+        tracing::info!("Creating and id map for schemas...");
+
         let mod_path_id_mapping = HashMap::<ModulePath, Uuid>::from_iter(
             raw_schemas
                 .iter()
                 .map(|(mod_path, _)| (mod_path.clone(), Uuid::now_v7())),
         );
+
+        tracing::info!("Processing schemas...");
 
         for (mod_path, (raw_schema_info, path)) in raw_schemas {
             let maybe_file_name = mod_path.last().clone();
@@ -68,7 +78,9 @@ impl Registry {
             let name = name.unwrap_or(maybe_name);
             let mod_path = raw_mod_path.unwrap_or(mod_path);
 
+            tracing::info!("Processing schema for {name} ({mod_path})...");
             let schema = Self::process_schema(schema, &mod_path_id_mapping)?;
+            tracing::info!("Done processing");
 
             let id = mod_path_id_mapping
                 .get(&mod_path)
