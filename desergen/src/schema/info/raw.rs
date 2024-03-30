@@ -18,7 +18,10 @@ pub struct RawSchemaInfo {
 }
 
 impl RawSchemaInfo {
-    pub fn open(schemas_root: impl AsRef<Path>, mod_path: ModulePath) -> RawSchemaInfoResult<Self> {
+    pub fn open(
+        schemas_root: impl AsRef<Path>,
+        mod_path: ModulePath,
+    ) -> RawSchemaInfoResult<(Self, PathBuf)> {
         let path = {
             let mut path = schemas_root.as_ref().join(PathBuf::from(mod_path));
 
@@ -36,7 +39,9 @@ impl RawSchemaInfo {
         let schema_file_str = std::fs::read_to_string(&path)
             .map_err(|err| RawSchemaInfoError::IO(err, path.clone()))?;
 
-        ron::from_str(&schema_file_str).map_err(|err| RawSchemaInfoError::RON(err, path))
+        ron::from_str(&schema_file_str)
+            .map(|schema_info| (schema_info, path.clone()))
+            .map_err(|err| RawSchemaInfoError::RON(err, path))
     }
 }
 

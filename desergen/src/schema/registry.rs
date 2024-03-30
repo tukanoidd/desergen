@@ -1,4 +1,9 @@
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::HashMap,
+    fs, io,
+    path::Path,
+    time::{SystemTimeError, UNIX_EPOCH},
+};
 
 use convert_case::{Case, Casing};
 use miette::Diagnostic;
@@ -23,11 +28,15 @@ pub struct Registry {
 }
 
 impl Registry {
+    pub fn get(&self, id: &Uuid) -> RegistryResult<&SchemaInfo> {
+        self.mapping.get(id).ok_or(RegistryError::IdNotFound(*id))
+    }
+
     pub fn process_schema_files(
         &mut self,
         schemas_root_dir: impl AsRef<Path>,
         schemas: Vec<ModulePath>,
-    ) -> RegistryResult<()> {
+    ) -> RegistryInitResult<()> {
         let schemas_root = schemas_root_dir.as_ref();
 
         let raw_schemas = schemas
@@ -43,7 +52,7 @@ impl Registry {
                 .map(|(mod_path, _)| (mod_path.clone(), Uuid::now_v7())),
         );
 
-        for (mod_path, raw_schema_info) in raw_schemas {
+        for (mod_path, (raw_schema_info, path)) in raw_schemas {
             let maybe_file_name = mod_path.last().clone();
             let maybe_name = maybe_file_name.to_case(Case::Pascal);
 
@@ -66,6 +75,12 @@ impl Registry {
                 .cloned()
                 .ok_or(RegistryInitError::IdNotFound(mod_path.clone()))?;
 
+            let file_meta = fs::metadata(path)?;
+            let last_updated = file_meta
+                .modified()?
+                .duration_since(UNIX_EPOCH)?
+                .as_millis();
+
             self.mapping.insert(
                 id,
                 SchemaInfo {
@@ -74,6 +89,7 @@ impl Registry {
                     mod_path,
                     schema,
                     validation,
+                    last_updated,
                 },
             );
         }
@@ -146,8 +162,10 @@ pub type RegistryResult<T> = Result<T, RegistryError>;
 
 #[derive(Debug, Error, Diagnostic)]
 pub enum RegistryError {
-    #[error("[Registry] {0}")]
-    RawSchemaInfo(#[from] RawSchemaInfoError),
+    #[error(
+        "[Registry] Failed to find schema id for '{0}' (Something is wrong and should not happen)"
+    )]
+    IdNotFound(Uuid),
     #[error("[Registry] {0}")]
     Init(#[from] RegistryInitError),
 }
@@ -156,6 +174,12 @@ pub type RegistryInitResult<T> = Result<T, RegistryInitError>;
 
 #[derive(Debug, Error, Diagnostic)]
 pub enum RegistryInitError {
+    #[error("[Init] {0}")]
+    IO(#[from] io::Error),
+    #[error("[Init] {0}")]
+    SystemTime(#[from] SystemTimeError),
+    #[error("[Init] {0}")]
+    RawSchemaInfo(#[from] RawSchemaInfoError),
     #[error(
         "[Init] Failed to find schema id for '{0}' (Something is wrong and should not happen)"
     )]

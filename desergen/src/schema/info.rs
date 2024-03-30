@@ -9,4 +9,5 @@ pub struct SchemaInfo {
     pub mod_path: ModulePath,
     pub schema: Schema,
     pub validation: Option<SchemaValidationInfo>,
+    pub last_updated: u128,
 }
