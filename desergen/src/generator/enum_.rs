@@ -1,20 +1,22 @@
+use convert_case::Casing;
 use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::schema::validation_info::EnumSchemaValidationInfo;
 
 use super::{
-    str::{EnumStringGenerator, StringGenerator, UtilStringGenerator},
+    str::{EnumStringGenerator, TypeStringGenerator, UtilStringGenerator},
     EnumSchemaGenInfo,
 };
 
 pub fn generate_enum(gen_info: EnumSchemaGenInfo) -> EnumGeneratorResult<GenerateEnumResult> {
     let generator: EnumGenerator = (&gen_info).into();
-    let type_str = generator.generate();
+    let type_output = generator.generate();
 
-    tracing::debug!("{type_str}");
+    tracing::debug!("Exports: {:?}", type_output.exports);
+    tracing::debug!("File String:\n{}", type_output.file_str);
 
-    Ok(GenerateEnumResult { type_str })
+    Ok(GenerateEnumResult { type_output })
 }
 
 struct EnumGenerator<'a> {
@@ -41,18 +43,41 @@ impl<'a> From<&'a EnumSchemaGenInfo<'a>> for EnumGenerator<'a> {
 }
 
 impl<'a> EnumGenerator<'a> {
-    fn generate(&self) -> String {
-        String::new()
+    fn generate(&self) -> EnumTypeOutput {
+        let default_var_name = format!(
+            "{}_DEFAULT",
+            self.name.to_case(convert_case::Case::UpperSnake)
+        );
+        let default_var: &String = self
+            .validation
+            .as_ref()
+            .and_then(|EnumSchemaValidationInfo { default, .. }| *default)
+            .unwrap_or(&self.variants[0]);
+
+        let file_str = String::new()
             .export()
             .enum_()
             .name(self.name)
             .variants(self.variants)
-            .finish()
+            .new_lines(2)
+            .default(self.name, &default_var_name, default_var)
+            .finish();
+
+        EnumTypeOutput {
+            exports: vec![default_var_name],
+            file_str,
+        }
     }
 }
 
+#[derive(Debug)]
+struct EnumTypeOutput {
+    exports: Vec<String>,
+    file_str: String,
+}
+
 pub struct GenerateEnumResult {
-    type_str: String,
+    pub type_output: EnumTypeOutput,
 }
 
 pub type EnumGeneratorResult<T> = Result<T, EnumGeneratorError>;
