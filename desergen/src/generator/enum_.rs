@@ -54,6 +54,8 @@ impl<'a> EnumGenerator<'a> {
             .and_then(|EnumSchemaValidationInfo { default, .. }| *default)
             .unwrap_or(&self.variants[0]);
 
+        let deserialization_function_name = format!("deserialize{}", self.name);
+
         let file_str = String::new()
             .export()
             .enum_()
@@ -64,7 +66,11 @@ impl<'a> EnumGenerator<'a> {
             .finish();
 
         EnumTypeOutput {
-            exports: vec![default_var_name],
+            exports: EnumTypeExports {
+                ty: self.name.clone(),
+                default: default_var_name,
+                deserialization_function: deserialization_function_name,
+            },
             file_str,
         }
     }
@@ -72,8 +78,15 @@ impl<'a> EnumGenerator<'a> {
 
 #[derive(Debug)]
 struct EnumTypeOutput {
-    exports: Vec<String>,
+    exports: EnumTypeExports,
     file_str: String,
+}
+
+#[derive(Debug)]
+pub struct EnumTypeExports {
+    pub ty: String,
+    pub default: String,
+    pub deserialization_function: String,
 }
 
 pub struct GenerateEnumResult {
