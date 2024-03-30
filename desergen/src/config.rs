@@ -57,14 +57,15 @@ impl Config {
     ];
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug)]
-enum ConfigFormat {
+pub enum ConfigFormat {
     TOML,
     JSON,
     YAML,
 }
 
-type AllConfigFormats = [ConfigFormat; 3];
+pub type AllConfigFormats = [ConfigFormat; 3];
 
 impl ConfigFormat {
     const ALL: AllConfigFormats = [ConfigFormat::TOML, ConfigFormat::JSON, ConfigFormat::YAML];
@@ -83,6 +84,7 @@ impl<'a> TryFrom<&'a str> for ConfigFormat {
     }
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Error, Diagnostic)]
 pub enum ConfigError {
     #[error("[Config] {0}")]

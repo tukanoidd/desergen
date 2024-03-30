@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use clap::Parser;
 use config::Config;
 use miette::IntoDiagnostic;
-use schema::file::raw::RawSchemaFile;
+use schema::registry::Registry;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 /// Generate type-safe deserializable TS classes from JSON/JS Object - defining schemas
@@ -49,12 +49,14 @@ fn main() -> miette::Result<()> {
         ));
     }
 
-    let raw_schema_files = schemas
-        .into_iter()
-        .map(|schema_mod_path| RawSchemaFile::open(&schemas_root_dir, schema_mod_path))
-        .collect::<Result<Vec<_>, _>>()?;
+    let registry = {
+        let mut registry = Registry::default();
+        registry.process_schema_files(schemas_root_dir, schemas)?;
 
-    tracing::info!("Raw Schema Files: {raw_schema_files:#?}");
+        registry
+    };
+
+    tracing::debug!("Registry: {registry:#?}");
 
     Ok(())
 }

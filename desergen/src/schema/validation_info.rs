@@ -1,14 +1,16 @@
-pub mod class;
-pub mod enum_;
-pub mod raw;
-
 use std::collections::HashMap;
 
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct SchemaValidationInfo {
-    required: Option<Vec<String>>,
-    aliases: HashMap<String, Vec<String>>,
-    defaults: HashMap<String, String>,
+    pub allow_undefined: Option<Vec<String>>,
+    pub aliases: HashMap<String, Vec<String>>,
+    pub defaults: SchemaValidationDefaults,
+}
+
+#[derive(Debug, Deserialize)]
+pub enum SchemaValidationDefaults {
+    Class(HashMap<String, String>),
+    Enum(String),
 }

@@ -1,9 +1,18 @@
 use std::{fmt::Display, path::PathBuf};
 
-use serde::{de::Visitor, Deserialize, Deserializer};
+use serde::{
+    de::{Error, Visitor},
+    Deserialize, Deserializer,
+};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ModulePath(Vec<String>);
+
+impl ModulePath {
+    pub fn last(&self) -> &String {
+        self.0.last().unwrap()
+    }
+}
 
 impl Display for ModulePath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -30,7 +39,18 @@ impl<'de> Visitor<'de> for ModulePathVisitor {
     where
         E: serde::de::Error,
     {
-        Ok(ModulePath(v.split("::").map(Into::into).collect()))
+        let components = v.split("::").map(Into::into).collect::<Vec<String>>();
+
+        match components.len() {
+            0 => return Err(Error::custom("Module path is empty!")),
+            1 => match components[0].is_empty() || components[0].chars().all(char::is_whitespace) {
+                true => return Err(Error::custom("Module path is empty!")),
+                false => {}
+            },
+            _ => {}
+        }
+
+        Ok(ModulePath(components))
     }
 }
 
